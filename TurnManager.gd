@@ -14,13 +14,15 @@ var units_with_moves_left: int = 0
 
 # References
 var unit_manager: UnitManager
+var city_manager  # CityManager - not typed to avoid circular dependency
 
 func _ready():
 	pass
 
-func initialize(units: UnitManager):
-	"""Initialize with reference to unit manager"""
+func initialize(units: UnitManager, cities = null):
+	"""Initialize with reference to unit manager and city manager"""
 	unit_manager = units
+	city_manager = cities
 
 func start_game():
 	"""Start the first turn"""
@@ -29,12 +31,18 @@ func start_game():
 func start_turn():
 	"""Start a new turn"""
 	print("=== Turn ", current_turn, " Started ===")
-	
+
+	# Process city production
+	if city_manager:
+		var gold_earned = city_manager.start_turn()
+		if gold_earned > 0:
+			print("Earned ", gold_earned, " gold this turn")
+
 	# Refresh all units
 	if unit_manager:
 		unit_manager.start_turn()
 		units_with_moves_left = count_units_with_moves()
-	
+
 	turn_started.emit(current_turn)
 	
 	if is_player_turn:

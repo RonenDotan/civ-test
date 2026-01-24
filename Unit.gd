@@ -5,6 +5,7 @@ class_name Unit
 signal unit_clicked(unit: Unit)
 signal movement_complete
 signal unit_died
+signal settler_found_city(unit: Unit, grid_position: Vector2i)
 
 # Unit properties
 @export var unit_name: String = "Settler"
@@ -220,3 +221,12 @@ func get_info_text() -> String:
 		attack_strength,
 		defense_strength
 	]
+
+func can_found_city() -> bool:
+	"""Check if this unit can found a city"""
+	return unit_type == UnitType.SETTLER
+
+func found_city():
+	"""Attempt to found a city at current position"""
+	if can_found_city():
+		settler_found_city.emit(self, grid_position)

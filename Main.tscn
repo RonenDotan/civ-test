@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://b2evpjl3vr2uo"]
+[gd_scene load_steps=8 format=3 uid="uid://b2evpjl3vr2uo"]
 
 [ext_resource type="Script" uid="uid://ctyre5xncqica" path="res://Main.gd" id="1_3dxm6"]
 [ext_resource type="Script" uid="uid://beh7y6hqjw7ph" path="res://HexGrid.gd" id="2_cm0pq"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://cok5pu01teqqk" path="res://UnitManager.gd" id="4_cm0pq"]
 [ext_resource type="Script" uid="uid://bbxw6e45ae61" path="res://TurnManager.gd" id="5_fos0i"]
 [ext_resource type="Script" uid="uid://6vtlp76rmgsg" path="res://GameUI.gd" id="6_3dxm6"]
+[ext_resource type="Script" path="res://CityManager.gd" id="7_citymgr"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_3dxm6")
@@ -18,6 +19,9 @@ script = ExtResource("3_fos0i")
 
 [node name="UnitManager" type="Node2D" parent="."]
 script = ExtResource("4_cm0pq")
+
+[node name="CityManager" type="Node2D" parent="."]
+script = ExtResource("7_citymgr")
 
 [node name="TurnManager" type="Node2D" parent="."]
 script = ExtResource("5_fos0i")

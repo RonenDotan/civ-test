@@ -4,6 +4,7 @@ class_name UnitManager
 # Signals
 signal unit_selected(unit: Unit)
 signal unit_moved(unit: Unit)
+signal settler_wants_to_found_city(unit: Unit, grid_position: Vector2i)
 
 # References
 var hex_grid: HexGrid
@@ -60,12 +61,20 @@ func spawn_unit(unit_type: int, grid_pos: Vector2i, owner_id: int = 0) -> Unit:
 	# Connect signals
 	unit.unit_clicked.connect(_on_unit_clicked)
 	unit.unit_died.connect(_on_unit_died.bind(unit))
-	
+
+	# Connect settler-specific signal
+	if unit_type == Unit.UnitType.SETTLER:
+		unit.settler_found_city.connect(_on_settler_found_city)
+
 	# Add to scene and tracking array
 	add_child(unit)
 	units.append(unit)
-	
+
 	return unit
+
+func _on_settler_found_city(unit: Unit, grid_pos: Vector2i):
+	"""Forward settler founding request to Main"""
+	settler_wants_to_found_city.emit(unit, grid_pos)
 
 func _on_unit_clicked(unit: Unit):
 	"""Handle unit click"""
@@ -143,6 +152,13 @@ func _on_unit_died(unit: Unit):
 	if selected_unit == unit:
 		selected_unit = null
 	print(unit.unit_name, " has died!")
+
+func remove_unit(unit: Unit):
+	"""Remove a unit from the game (e.g., settler consumed when founding city)"""
+	units.erase(unit)
+	if selected_unit == unit:
+		selected_unit = null
+	unit.queue_free()
 
 func remove_all_units():
 	"""Remove all units from the game"""
