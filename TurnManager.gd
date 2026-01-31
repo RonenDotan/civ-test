@@ -6,9 +6,11 @@ signal turn_started(turn_number: int)
 signal turn_ended(turn_number: int)
 signal player_turn_started
 signal ai_turn_started
+signal gold_updated(gold: int)
 
 # Turn state
 var current_turn: int = 1
+var player_gold: int = 0
 var is_player_turn: bool = true
 var units_with_moves_left: int = 0
 
@@ -32,11 +34,13 @@ func start_turn():
 	"""Start a new turn"""
 	print("=== Turn ", current_turn, " Started ===")
 
-	# Process city production
+	# Process city production (food, production, gold per turn)
 	if city_manager:
 		var gold_earned = city_manager.start_turn()
+		player_gold += gold_earned
+		gold_updated.emit(player_gold)
 		if gold_earned > 0:
-			print("Earned ", gold_earned, " gold this turn")
+			print("Earned ", gold_earned, " gold this turn (Total: ", player_gold, ")")
 
 	# Refresh all units
 	if unit_manager:
