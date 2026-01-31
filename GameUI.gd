@@ -20,6 +20,7 @@ var city_view_production_bar: ProgressBar
 var city_view_turns_label: Label
 var city_view_completed_container: VBoxContainer
 var city_view_available_container: VBoxContainer
+var city_buildings_display: CityBuildingsDisplay
 
 # References
 var turn_manager: TurnManager
@@ -303,6 +304,12 @@ func _setup_city_view():
 	city_view_turns_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
 	city_view_panel.add_child(city_view_turns_label)
 
+	# Isometric buildings display (below production info)
+	city_buildings_display = CityBuildingsDisplay.new()
+	city_buildings_display.position = Vector2(col2_x, body_y + 155)
+	city_buildings_display.size = Vector2(col_w - 20, body_h - 165)
+	city_view_panel.add_child(city_buildings_display)
+
 	# --- Column 3: BUILDINGS ---
 	var col3_x = col2_x + col_w + 10
 
@@ -425,6 +432,7 @@ func _on_city_selected(city):
 func _open_city_view(city):
 	"""Open the full-screen city view for the given city"""
 	_refresh_city_view(city)
+	city_buildings_display.set_buildings(city.completed_buildings, -1)
 	city_view_panel.visible = true
 
 func _close_city_view():
@@ -567,6 +575,9 @@ func _refresh_city_view(city):
 			btn.pressed.connect(_on_build_button_pressed.bind(city, building_type))
 			city_view_available_container.add_child(btn)
 
+	# Sync isometric buildings display
+	city_buildings_display.set_buildings(city.completed_buildings, -1)
+
 func _on_city_production_changed(city):
 	"""Refresh panel when city production target changes"""
 	if city_manager and city_manager.selected_city == city and is_city_view_open():
@@ -581,6 +592,7 @@ func _on_building_completed(city, building_type: int):
 	"""Refresh city view when building completes (if that city is selected)"""
 	if city_manager and city_manager.selected_city == city and is_city_view_open():
 		_refresh_city_view(city)
+		city_buildings_display.set_buildings(city.completed_buildings, building_type)
 
 func hide_city_info():
 	"""Hide the city view"""
