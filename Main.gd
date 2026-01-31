@@ -89,11 +89,15 @@ func _input(event):
 			game_ui.hide_unit_info()
 			game_ui.hide_city_info()
 
-	# Quick end turn with spacebar
 	if event is InputEventKey:
+		# Quick end turn with spacebar
 		if event.keycode == KEY_SPACE and event.pressed and not event.echo:
 			if turn_manager.can_end_turn():
 				turn_manager.end_turn()
+		# Found city with F key (when settler is selected)
+		if event.keycode == KEY_F and event.pressed and not event.echo:
+			if unit_manager.selected_unit and unit_manager.selected_unit.can_found_city():
+				unit_manager.selected_unit.found_city()
 
 func _on_settler_found_city(unit: Unit, grid_pos: Vector2i):
 	"""Handle settler attempting to found a city"""

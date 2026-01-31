@@ -5,26 +5,17 @@ class_name City
 signal city_clicked(city: City)
 signal city_destroyed
 
-# City properties
+# City properties (per spec: name, health 100, owner_id, grid_position)
 @export var city_name: String = "City"
-@export var max_health: int = 200
+@export var max_health: int = 100
 var current_health: int
 var grid_position: Vector2i
 var owner_id: int = 0  # 0 = player, 1+ = AI players
-var population: int = 1
 
-# Resource production
-var food_per_turn: int = 2
-var production_per_turn: int = 1
-var gold_per_turn: int = 1
-
-# Resource storage
-var stored_food: int = 0
-var stored_production: int = 0
-
-# Growth constants
-const FOOD_FOR_GROWTH_BASE: int = 10
-const FOOD_PER_POP: int = 5
+# Resource production per turn: food +3, production +2, gold +1
+const FOOD_PER_TURN: int = 3
+const PRODUCTION_PER_TURN: int = 2
+const GOLD_PER_TURN: int = 1
 
 # Visual elements
 var city_shape: Polygon2D
@@ -41,23 +32,25 @@ func _ready():
 	setup_input()
 
 func setup_visuals():
-	"""Create the visual representation of the city"""
-	# Create selection ring (behind everything)
+	"""Create the visual representation of the city (colored square, different from unit circles)"""
+	var size = 24.0  # Half-width/height of square
+
+	# Create selection ring (yellow outline when selected)
 	selection_ring = Polygon2D.new()
-	selection_ring.polygon = get_octagon_polygon(35)
+	selection_ring.polygon = get_rect_polygon(size + 10)
 	selection_ring.color = Color(1, 1, 0, 0.5)
 	selection_ring.visible = false
 	add_child(selection_ring)
 
-	# Create city shape (octagon to distinguish from unit circles)
+	# Create city shape (colored square/rectangle to distinguish from unit circles)
 	city_shape = Polygon2D.new()
-	city_shape.polygon = get_octagon_polygon(25)
+	city_shape.polygon = get_rect_polygon(size)
 	city_shape.color = get_city_color()
 	add_child(city_shape)
 
 	# Add border to city shape
 	var border = Line2D.new()
-	var points = get_octagon_polygon(25)
+	var points = get_rect_polygon(size)
 	points.append(points[0])  # Close the shape
 	border.points = points
 	border.width = 2.0
@@ -83,11 +76,11 @@ func setup_visuals():
 
 	add_child(health_bar)
 
-	# Create name label
+	# Create name label (above the city)
 	name_label = Label.new()
 	name_label.text = city_name
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.position = Vector2(-40, 25)
+	name_label.position = Vector2(-40, -45)
 	name_label.size = Vector2(80, 20)
 	name_label.add_theme_font_size_override("font_size", 12)
 	name_label.add_theme_color_override("font_color", Color.WHITE)
@@ -95,15 +88,14 @@ func setup_visuals():
 	name_label.add_theme_constant_override("outline_size", 2)
 	add_child(name_label)
 
-func get_octagon_polygon(radius: float) -> PackedVector2Array:
-	"""Generate an octagon polygon"""
-	var points = PackedVector2Array()
-	for i in range(8):
-		var angle = (PI * 2 * i) / 8 - PI / 8  # Offset to have flat top
-		var x = cos(angle) * radius
-		var y = sin(angle) * radius
-		points.append(Vector2(x, y))
-	return points
+func get_rect_polygon(half_size: float) -> PackedVector2Array:
+	"""Generate a square/rectangle polygon"""
+	return PackedVector2Array([
+		Vector2(-half_size, -half_size),
+		Vector2(half_size, -half_size),
+		Vector2(half_size, half_size),
+		Vector2(-half_size, half_size)
+	])
 
 func get_city_color() -> Color:
 	"""Get color based on owner"""
@@ -141,30 +133,13 @@ func set_city_name(new_name: String):
 	if name_label:
 		name_label.text = city_name
 
-func process_turn():
-	"""Process city production for a turn"""
-	# Calculate yields based on population
-	var food_yield = food_per_turn + population
-	var production_yield = production_per_turn + (population / 2)
-	var gold_yield = gold_per_turn + (population / 2)
-
-	# Add to storage
-	stored_food += food_yield
-	stored_production += production_yield
-
-	# Check for population growth
-	var food_needed = get_food_for_growth()
-	if stored_food >= food_needed:
-		stored_food -= food_needed
-		population += 1
-		print(city_name, " has grown to population ", population, "!")
-
-	# Return gold for treasury
-	return gold_yield
-
-func get_food_for_growth() -> int:
-	"""Calculate food needed for next population growth"""
-	return FOOD_FOR_GROWTH_BASE + (population * FOOD_PER_POP)
+func process_turn() -> Dictionary:
+	"""Process city production for a turn. Returns {food, production, gold} to add to global totals."""
+	return {
+		"food": FOOD_PER_TURN,
+		"production": PRODUCTION_PER_TURN,
+		"gold": GOLD_PER_TURN
+	}
 
 func take_damage(amount: int):
 	"""Apply damage to the city"""
@@ -187,17 +162,12 @@ func destroy():
 	queue_free()
 
 func get_info_text() -> String:
-	"""Get formatted info about this city"""
-	var food_needed = get_food_for_growth()
-	return "%s\nPopulation: %d\nHP: %d/%d\n\nFood: +%d (%d/%d)\nProduction: +%d (%d stored)\nGold: +%d" % [
+	"""Get formatted info about this city (food, production, gold icons and numbers)"""
+	return "%s\nHP: %d/%d\n\nProduces per turn:\n  Food +%d\n  Production +%d\n  Gold +%d" % [
 		city_name,
-		population,
 		current_health,
 		max_health,
-		food_per_turn + population,
-		stored_food,
-		food_needed,
-		production_per_turn + (population / 2),
-		stored_production,
-		gold_per_turn + (population / 2)
+		FOOD_PER_TURN,
+		PRODUCTION_PER_TURN,
+		GOLD_PER_TURN
 	]

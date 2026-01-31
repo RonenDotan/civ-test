@@ -3,6 +3,7 @@ class_name GameUI
 
 # UI Elements
 var turn_label: Label
+var resources_label: Label
 var unit_info_panel: Panel
 var unit_info_label: Label
 var end_turn_button: Button
@@ -29,7 +30,17 @@ func setup_ui():
 	turn_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	turn_label.add_theme_constant_override("outline_size", 2)
 	add_child(turn_label)
-	
+
+	# Total resources display (Food, Production, Gold) - top-left
+	resources_label = Label.new()
+	resources_label.text = "Food: 0  Production: 0  Gold: 0"
+	resources_label.position = Vector2(10, 35)
+	resources_label.add_theme_font_size_override("font_size", 16)
+	resources_label.add_theme_color_override("font_color", Color.WHITE)
+	resources_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	resources_label.add_theme_constant_override("outline_size", 2)
+	add_child(resources_label)
+
 	# End turn button (top-right)
 	end_turn_button = Button.new()
 	end_turn_button.text = "End Turn"
@@ -151,6 +162,7 @@ func initialize(turn_mgr: TurnManager, unit_mgr: UnitManager, city_mgr = null):
 	# Connect signals
 	if turn_manager:
 		turn_manager.turn_started.connect(_on_turn_started)
+		turn_manager.resources_updated.connect(_on_resources_updated)
 
 	if unit_manager:
 		unit_manager.unit_selected.connect(_on_unit_selected)
@@ -162,10 +174,17 @@ func _on_turn_started(turn_number: int):
 	"""Update UI when turn starts"""
 	turn_label.text = "Turn: " + str(turn_number)
 
+func _on_resources_updated(food: int, production: int, gold: int):
+	"""Update total resources display (Food, Production, Gold)"""
+	resources_label.text = "Food: %d  Production: %d  Gold: %d" % [food, production, gold]
+
 func _on_unit_selected(unit: Unit):
 	"""Show unit info when selected"""
 	unit_info_panel.visible = true
-	unit_info_label.text = unit.get_info_text()
+	var info_text = unit.get_info_text()
+	if unit.can_found_city():
+		info_text += "\n\n[Press F to Found City]"
+	unit_info_label.text = info_text
 
 	# Show found city button only for settlers
 	found_city_button.visible = unit.can_found_city()
