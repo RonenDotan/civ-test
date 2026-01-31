@@ -5,6 +5,7 @@ class_name CityManager
 signal city_selected(city: City)
 signal city_founded(city: City)
 signal city_destroyed(city: City)
+signal building_completed(city: City, building_type: int)
 
 # References
 var hex_grid: HexGrid
@@ -34,6 +35,7 @@ func found_city(grid_pos: Vector2i, name: String, owner_id: int = 0) -> City:
 	# Connect signals
 	city.city_clicked.connect(_on_city_clicked)
 	city.city_destroyed.connect(_on_city_destroyed.bind(city))
+	city.building_completed.connect(_on_building_completed)
 
 	# Add to scene and tracking array
 	add_child(city)
@@ -75,14 +77,16 @@ func get_city_at(grid_pos: Vector2i) -> City:
 	return null
 
 func start_turn() -> Dictionary:
-	"""Called at the start of each turn - process all cities. Returns {food, production, gold} for player."""
-	var totals = {"food": 0, "production": 0, "gold": 0}
+	"""Called at the start of each turn - process production and resource generation. Returns {food, production, gold, science, culture}."""
+	var totals = {"food": 0, "production": 0, "gold": 0, "science": 0, "culture": 0}
 	for city in cities:
 		if city.owner_id == 0:  # Only player cities for now
 			var yields = city.process_turn()
 			totals.food += yields.food
 			totals.production += yields.production
 			totals.gold += yields.gold
+			totals.science += yields.science
+			totals.culture += yields.culture
 	return totals
 
 func get_player_cities() -> Array[City]:
@@ -104,6 +108,10 @@ func _on_city_destroyed(city: City):
 		selected_city = null
 	city_destroyed.emit(city)
 	print(city.city_name, " has been destroyed!")
+
+func _on_building_completed(city: City, building_type: int):
+	"""Forward building completed signal"""
+	building_completed.emit(city, building_type)
 
 func remove_all_cities():
 	"""Remove all cities from the game"""

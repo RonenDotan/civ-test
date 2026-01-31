@@ -26,6 +26,7 @@ func _ready():
 
 	# Connect city manager signals
 	city_manager.city_selected.connect(_on_city_selected)
+	city_manager.building_completed.connect(_on_building_completed)
 
 	# Connect settler founding signal
 	unit_manager.settler_wants_to_found_city.connect(_on_settler_found_city)
@@ -55,6 +56,10 @@ func spawn_starting_units():
 
 func _on_hex_clicked(cell: HexCell):
 	"""Handle hex cell clicks - for unit movement and city selection"""
+	# Block hex clicks while city view is open
+	if game_ui.is_city_view_open():
+		return
+
 	# Check if there's a city at this hex
 	var city_at_hex = city_manager.get_city_at(cell.grid_position)
 	if city_at_hex:
@@ -81,6 +86,23 @@ func _on_hex_clicked(cell: HexCell):
 
 func _input(event):
 	"""Handle global input"""
+	# Close city view with Escape (before other escape handling)
+	if event is InputEventKey:
+		if event.keycode == KEY_ESCAPE and event.pressed and not event.echo:
+			if game_ui.is_city_view_open():
+				game_ui.hide_city_info()
+				get_viewport().set_input_as_handled()
+				return
+
+	# Block right-click and other input while city view is open
+	if game_ui.is_city_view_open():
+		if event is InputEventMouseButton:
+			if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
+				game_ui.hide_city_info()
+				get_viewport().set_input_as_handled()
+				return
+		return
+
 	# Deselect unit and city with right-click
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
@@ -133,6 +155,11 @@ func _on_settler_found_city(unit: Unit, grid_pos: Vector2i):
 func _on_city_selected(_city):
 	"""Handle city selection - deselect any selected unit"""
 	unit_manager.deselect_unit()
+
+func _on_building_completed(city: City, building_type: int):
+	"""Show notification when building completes"""
+	var building_name = Building.get_building_name(building_type)
+	game_ui.show_message(city.city_name + " has completed: " + building_name + "!")
 
 func generate_city_name() -> String:
 	"""Generate a unique city name"""

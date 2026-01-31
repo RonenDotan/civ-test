@@ -6,13 +6,15 @@ signal turn_started(turn_number: int)
 signal turn_ended(turn_number: int)
 signal player_turn_started
 signal ai_turn_started
-signal resources_updated(food: int, production: int, gold: int)
+signal resources_updated(food: int, production: int, gold: int, science: int, culture: int)
 
 # Turn state - total resources globally for the player
 var current_turn: int = 1
 var player_food: int = 0
 var player_production: int = 0
 var player_gold: int = 0
+var player_science: int = 0
+var player_culture: int = 0
 var is_player_turn: bool = true
 var units_with_moves_left: int = 0
 
@@ -36,15 +38,17 @@ func start_turn():
 	"""Start a new turn"""
 	print("=== Turn ", current_turn, " Started ===")
 
-	# Process city production (food, production, gold per turn)
+	# Process city production (food, production, gold, science, culture per turn)
 	if city_manager:
 		var yields = city_manager.start_turn()
 		player_food += yields.food
 		player_production += yields.production
 		player_gold += yields.gold
-		resources_updated.emit(player_food, player_production, player_gold)
-		if yields.food > 0 or yields.production > 0 or yields.gold > 0:
-			print("Cities produced: Food +%d, Production +%d, Gold +%d" % [yields.food, yields.production, yields.gold])
+		player_science += yields.science
+		player_culture += yields.culture
+		resources_updated.emit(player_food, player_production, player_gold, player_science, player_culture)
+		if yields.food > 0 or yields.production > 0 or yields.gold > 0 or yields.science > 0 or yields.culture > 0:
+			print("Cities produced: Food +%d, Prod +%d, Gold +%d, Science +%d, Culture +%d" % [yields.food, yields.production, yields.gold, yields.science, yields.culture])
 
 	# Refresh all units
 	if unit_manager:
