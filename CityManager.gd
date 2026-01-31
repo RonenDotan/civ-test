@@ -74,13 +74,16 @@ func get_city_at(grid_pos: Vector2i) -> City:
 			return city
 	return null
 
-func start_turn() -> int:
-	"""Called at the start of each turn - process all cities"""
-	var total_gold = 0
+func start_turn() -> Dictionary:
+	"""Called at the start of each turn - process all cities. Returns {food, production, gold} for player."""
+	var totals = {"food": 0, "production": 0, "gold": 0}
 	for city in cities:
 		if city.owner_id == 0:  # Only player cities for now
-			total_gold += city.process_turn()
-	return total_gold
+			var yields = city.process_turn()
+			totals.food += yields.food
+			totals.production += yields.production
+			totals.gold += yields.gold
+	return totals
 
 func get_player_cities() -> Array[City]:
 	"""Get all cities belonging to the player"""
