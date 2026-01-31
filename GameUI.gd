@@ -3,6 +3,7 @@ class_name GameUI
 
 # UI Elements
 var turn_label: Label
+var gold_label: Label
 var unit_info_panel: Panel
 var unit_info_label: Label
 var end_turn_button: Button
@@ -29,6 +30,16 @@ func setup_ui():
 	turn_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	turn_label.add_theme_constant_override("outline_size", 2)
 	add_child(turn_label)
+
+	# Gold display (next to turn)
+	gold_label = Label.new()
+	gold_label.text = "Gold: 0"
+	gold_label.position = Vector2(10, 35)
+	gold_label.add_theme_font_size_override("font_size", 18)
+	gold_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.2))
+	gold_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	gold_label.add_theme_constant_override("outline_size", 2)
+	add_child(gold_label)
 	
 	# End turn button (top-right)
 	end_turn_button = Button.new()
@@ -151,6 +162,7 @@ func initialize(turn_mgr: TurnManager, unit_mgr: UnitManager, city_mgr = null):
 	# Connect signals
 	if turn_manager:
 		turn_manager.turn_started.connect(_on_turn_started)
+		turn_manager.gold_updated.connect(_on_gold_updated)
 
 	if unit_manager:
 		unit_manager.unit_selected.connect(_on_unit_selected)
@@ -162,10 +174,17 @@ func _on_turn_started(turn_number: int):
 	"""Update UI when turn starts"""
 	turn_label.text = "Turn: " + str(turn_number)
 
+func _on_gold_updated(gold: int):
+	"""Update gold display"""
+	gold_label.text = "Gold: " + str(gold)
+
 func _on_unit_selected(unit: Unit):
 	"""Show unit info when selected"""
 	unit_info_panel.visible = true
-	unit_info_label.text = unit.get_info_text()
+	var info_text = unit.get_info_text()
+	if unit.can_found_city():
+		info_text += "\n\n[Press F to Found City]"
+	unit_info_label.text = info_text
 
 	# Show found city button only for settlers
 	found_city_button.visible = unit.can_found_city()
